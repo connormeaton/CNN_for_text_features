@@ -66,12 +66,14 @@ def load_data(data_source):
     if data_source == "keras_data_set":
         (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_words, start_char=None,
                                                               oov_char=None, index_from=None)
-
+ 
         x_train = sequence.pad_sequences(x_train, maxlen=sequence_length, padding="post", truncating="post")
         x_test = sequence.pad_sequences(x_test, maxlen=sequence_length, padding="post", truncating="post")
-
+   
         vocabulary = imdb.get_word_index()
+        # print(vocabulary) # 'poets': 16812,
         vocabulary_inv = dict((v, k) for k, v in vocabulary.items())
+     
         vocabulary_inv[0] = "<PAD/>"
     else:
         x, y, vocabulary, vocabulary_inv_list = data_helpers.load_data()
@@ -94,7 +96,9 @@ def load_data(data_source):
 # Data Preparation
 print("Load data...")
 x_train, y_train, x_test, y_test, vocabulary_inv = load_data(data_source)
-
+# x_train, y_train, x_test, y_test, vocabulary_inv =
+# print(x_train.shape) # (25000, 400)
+# print(y_train.shape) # (25000,)
 if sequence_length != x_test.shape[1]:
     print("Adjusting sequence length for actual size")
     sequence_length = x_test.shape[1]
@@ -150,6 +154,8 @@ z = Concatenate()(conv_blocks) if len(conv_blocks) > 1 else conv_blocks[0]
 
 z = Dropout(dropout_prob[1])(z)
 z = Dense(hidden_dims, activation="relu")(z)
+# model_out = model.get_layer("z").output
+# m = Model(input=inputLayer, outputs=model_out)
 model_output = Dense(1, activation="sigmoid")(z)
 
 model = Model(model_input, model_output)
@@ -161,7 +167,11 @@ if model_type == "CNN-non-static":
     print("Initializing embedding layer with word2vec weights, shape", weights.shape)
     embedding_layer = model.get_layer("embedding")
     embedding_layer.set_weights([weights])
-
+for layer in model.layers[-1:]:
+    layer.trainable = False
+for layer in model.layers:
+    print(layer)
+    print(layer.trainable)
 # Train the model
 model.fit(x_train, y_train, batch_size=batch_size, epochs=num_epochs,
           validation_data=(x_test, y_test), verbose=2)

@@ -18,9 +18,21 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
     min_word_count  # Minimum word count                        
     context         # Context window size 
     """
+
+    # standard sentence matrix looks like:
+    # [[  11   19   13 ...    0    0    0]
+    #  [ 191 1150  191 ...    0    0    0]
+    #  [  11   44    5 ...    0    0    0]
+    #  ...
+    #  [  10 1405   12 ...    0    0    0]
+    #  [   8  116  238 ...    0    0    0]
+    #  [   3   49  427 ...    0    0    0]]
+
     model_dir = 'models'
+    # model_dir = 'models_'
     model_name = "{:d}features_{:d}minwords_{:d}context".format(num_features, min_word_count, context)
     model_name = join(model_dir, model_name)
+
     if exists(model_name):
         embedding_model = word2vec.Word2Vec.load(model_name)
         print('Load existing Word2Vec model \'%s\'' % split(model_name)[-1])
@@ -31,7 +43,9 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
 
         # Initialize and train the model
         print('Training Word2Vec model...')
+ 
         sentences = [[vocabulary_inv[w] for w in s] for s in sentence_matrix]
+    
         embedding_model = word2vec.Word2Vec(sentences, workers=num_workers,
                                             size=num_features, min_count=min_word_count,
                                             window=context, sample=downsampling)
