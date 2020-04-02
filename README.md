@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Convolutional Neural Networks for Sentence Classification
 
 Train convolutional network for sentiment analysis. Based on "Convolutional Neural Networks for Sentence Classification" by Yoon Kim, [link](http://arxiv.org/pdf/1408.5882v2.pdf). Inspired by Denny Britz article "Implementing a CNN for Text Classification in TensorFlow", [link](http://www.wildml.com/2015/12/implementing-a-cnn-for-text-classification-in-tensorflow/).
@@ -15,3 +16,7 @@ For "CNN-rand" and "CNN-non-static" gets to 88-90%, and "CNN-static" - 85%
 
 * The [Keras](http://keras.io/) Deep Learning library and most recent [Theano](http://deeplearning.net/software/theano/install.html#install) backend should be installed. You can use pip for that. 
 Not tested with TensorFlow, but should work.
+=======
+# CNN_for_text_features
+A CNN for feature generation from text roughly based on Kim (2014) in Keras
+>>>>>>> 9e0e966756b3ac8310c494c37e608d53c2286b93
