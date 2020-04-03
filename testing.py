@@ -14,7 +14,7 @@ import numpy as np
 
 # Model Hyperparameters
 embedding_dim = 50
-filter_sizes = (3, 4, 5)
+filter_sizes = (2, 4, 5)
 num_filters = 10
 dropout_prob = (0.5, 0.8)
 hidden_dims = 50
@@ -24,7 +24,10 @@ batch_size = 64
 num_epochs = 10
 
 # Prepossessing parameters
-sequence_length = 400
+### check this 
+# sequence_length = 400 # will update to max seq_length from new data below
+
+
 max_words = 5000
 
 # Word2Vec parameters (see train_word2vec)
@@ -88,16 +91,17 @@ for x in structured_utt_list:
 ### 
 # De-structuring (flattening) hierarchical text data to feed into embedding
 # Looks like:
-                        #    |        corpus        |
-                        #    / | \     / | \    / | \
-                        #   u1 u2 u3 u4 u5 u6  u7 u8 u9
-                # not sure if this is the best approach...
-                # loosing conversation level granularity,
-                # but context may not exceed window function?
+  
 
 flat_tokens = [item for sublist in tok_sequences for item in sublist] # len 7910
 flat_labels = [item for sublist in structured_labels for item in sublist] # len 7910
 
+# set new sequence length to observed max sequence length
+seq_len_list = []
+for i in flat_tokens:
+    seq_len_list.append(len(i))
+# sequence_length = max(seq_len_list)
+sequence_length = 400
 # # Set vocab size
 flat_list = [item for sublist in text_sequences for item in sublist]
 flat_list = [item for sublist in flat_list for item in sublist]
@@ -105,12 +109,13 @@ flat_words = ' '.join(flat_list)
 distinct_words = set(m.group(0).lower() for m in re.finditer(r"\w+",flat_words))
 len_distinct_words = len(distinct_words) + 1 # 8581
 
-# pad sequences to 400 (convention set by OG model)
+# pad sequences to max seq length (400 via OG model, 480 on local data)
 pad_flat_tokens = sequence.pad_sequences(flat_tokens, maxlen=sequence_length, padding="post", truncating="post")
+# print(pad_flat_tokens.shape)
 
 # swt 80/20 train test split
-x_train, y_train = pad_flat_tokens[:round(len(flat_tokens)*.8)], flat_labels[round(len(flat_labels)*.8):]
-x_test, y_test = pad_flat_tokens[:round(len(flat_tokens)*.8)],flat_labels[round(len(flat_labels)*.8):]
+x_train, y_train = pad_flat_tokens[:round(len(flat_tokens)*.8)], flat_labels[:round(len(flat_labels)*.8)]
+x_test, y_test = pad_flat_tokens[round(len(flat_tokens)*.8):],flat_labels[round(len(flat_labels)*.8):]
 
 # Prepare embedding layer weights and convert inputs for static model
 x_train, x_test = np.array(x_train), np.array(x_test)
@@ -136,8 +141,8 @@ for sz in filter_sizes:
                          padding="valid",
                          activation="relu",
                          strides=1)(z)
-    conv = MaxPooling1D(pool_size=2)(conv)
-    conv = Flatten()(conv)
+    conv = MaxPooling1D(pool_size=2)(conv) # get output check D
+    conv = Flatten()(conv) # try not flattening?
     conv_blocks.append(conv)
 z = Concatenate()(conv_blocks) if len(conv_blocks) > 1 else conv_blocks[0]
 
@@ -153,8 +158,31 @@ model = Model(model_input, model_output)
 
 # Create output variable
 output = model.layers[-1].get_weights()
-print('output;', output)
-print(len(output))
-print(output[0].shape)
-print(output[1].shape)
+# print(output[0].shape)
 
+# # testing things...where are my dissapearing tensors?
+count = 0
+for i in output[0]:
+    # print(i)
+    # print(i.shape)
+    # print(count)
+    count += 1
+
+x = np.vstack((x_train, x_test))
+print(x.shape) # (7149, 480)
+print(x_train.shape) # (6328, 480)
+print(x_test.shape) # (1582, 480)
+print(len(y_train)) # len(6328)
+print(len(y_test)) # len(1582)
+print('unexplainable delta b/w input data and output data... ', x.shape[0]-count) # 760, diff between output tensors and input arrays...???
+
+# print(flat_tokens[:10])
+print(model.summary())
+
+
+### TODO
+# Figure out this input/ouput delta, filter size has something to do with it...
+# Why is my output 1D when the GCN model appears to take 2 (maybe even 3) D data?
+# exp with 2D filtering in multiple ways:
+    # ex. c1utt1, c1utt2 in same kernel, OR
+    # c1utt1, c2utt1 in same kernel to capture conversation position information?

@@ -28,6 +28,7 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
     #  [   8  116  238 ...    0    0    0]
     #  [   3   49  427 ...    0    0    0]]
 
+
     model_dir = 'models'
     # model_dir = 'models_'
     model_name = "{:d}features_{:d}minwords_{:d}context".format(num_features, min_word_count, context)
@@ -45,7 +46,7 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
         print('Training Word2Vec model...')
  
         sentences = [[vocabulary_inv[w] for w in s] for s in sentence_matrix]
-    
+
         embedding_model = word2vec.Word2Vec(sentences, workers=num_workers,
                                             size=num_features, min_count=min_word_count,
                                             window=context, sample=downsampling)

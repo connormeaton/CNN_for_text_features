@@ -154,12 +154,42 @@ z = Concatenate()(conv_blocks) if len(conv_blocks) > 1 else conv_blocks[0]
 
 z = Dropout(dropout_prob[1])(z)
 z = Dense(hidden_dims, activation="relu")(z)
-# model_out = model.get_layer("z").output
-# m = Model(input=inputLayer, outputs=model_out)
-model_output = Dense(1, activation="sigmoid")(z)
 
+
+# model_output = Dense(1, activation="sigmoid")(z)
+
+# model = Model(model_input, model_output)
+# model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+model_output = Dense(hidden_dims, activation="relu")(z)
+
+# Freeze last (classification) layer from OG model
+# model_output = Dense(1, activation="sigmoid")(z)
+
+### -------------------------- testing block --------------------------------
+# Define model
 model = Model(model_input, model_output)
-model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+
+# Create output variable
+output = model.layers[-1].get_weights()
+
+# testing things...where are my dissapearing tensors?
+count = 0
+for i in output[0]:
+    print(i)
+    print(i.shape)
+    print(count)
+    count += 1
+
+x = np.vstack((x_train, x_test))
+print(x.shape) # (7149, 480)
+print(x_train.shape) # (6328, 480)
+print(x_test.shape) # (1582, 480)
+print(len(y_train)) # len(6328)
+print(len(y_test)) # len(1582)
+print(x.shape[0]-count) # 760, diff between output tensors and input arrays...???
+
+### -------------------------------------------------------------------------------
 
 # Initialize weights with word2vec
 if model_type == "CNN-non-static":
